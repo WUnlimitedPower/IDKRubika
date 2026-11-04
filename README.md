@@ -1,93 +1,106 @@
-# Rubika Bot API Wrapper
+# Rubika Bot Framework
+### In Python
 
-A small, modular Python wrapper for the Rubika Bot API. The original public class names, method names, enum names, model attributes, and handler usage are preserved.
+یک فریم‌ورک سبک برای ساخت بات در پیام‌رسان **روبیکا**، با الهام از `python-telegram-bot`. تمام متدهای رسمی [Rubika Bot API](https://rubika.ir/botapi) پوشش داده شده‌اند و خروجی متدها به‌جای `dict` خام، مدل‌های تایپ‌شده (مثل `Message`، `Chat`، `Update`، `File`) هستند.
 
-## Project structure
+## ویژگی‌ها
 
-```text
-idk_rubika_project/
-├── main.py
-├── requirements.txt
-├── README.md
-└── idk_rubika/
-    ├── __init__.py
-    ├── application.py
-    ├── bot.py
-    ├── context.py
-    ├── database.py
-    ├── enums.py
-    ├── example_handlers.py
-    ├── filters.py
-    ├── handlers.py
-    └── models.py
-```
+- ✅ پوشش کامل متدهای Rubika Bot API (`sendMessage`, `sendPoll`, `sendFile`, `getChat` و...)
+- ✅ مدل‌های تایپ‌شده برای همه‌ی موجودیت‌ها (`Update`, `Message`, `Chat`, `Bot`, `Keypad`, `Metadata` و...)
+- ✅ سیستم Handler و Filter به سبک `python-telegram-bot` (`CommandHandler`, `MessageHandler`, `EventHandler`, `UpdateHandler`)
+- ✅ Polling با ذخیره‌ی خودکار `offset_id` بر اساس `username` بات (بدون ذخیره‌ی توکن)
+- ✅ ارسال فایل دو مرحله‌ای (`requestSendFile` → upload → `sendFile`) با توابع آماده (`send_photo`, `send_video`, `send_voice`, `send_music`, `send_gif`, `send_document`)
+- ✅ پشتیبانی از `asyncio`
 
-## Install
-
-Python 3.9 or newer is recommended because the polling implementation uses `asyncio.to_thread`.
+## نصب
 
 ```bash
-python -m pip install -r requirements.txt
+pip install requests
 ```
 
-## Run the example
+سپس سورس فریم‌ورک را در پروژه‌ی خود کپی کنید (پوشه‌ی `rubika_bot/`).
 
-Set your Rubika bot token as an environment variable; do not put a real token in a public source file.
+## ساختار پروژه
 
-**Windows CMD:**
-
-```bat
-set RUBIKA_TOKEN=YOUR_BOT_TOKEN
-python main.py
+```
+rubika_bot/
+├── __init__.py
+├── application.py    # Application (مدیریت polling و handlerها) 
+├── bot.py            # کلاس RubikaBot و متدهای API
+├── context.py        # CallbackContext
+├── database.py       # شاید دیلیتش کنیم( شاید )
+├── enums.py          # همه‌ی Enumها (UpdateTypeEnum, ButtonTypeEnum, ...)
+├── example_handlers.py # یه چند تا مثال از هندلر ها
+├── filters.py        # فیلترها (text, command, update_type, ...)
+├── handlers.py       # Handler, MessageHandler, CommandHandler, ...
+├── models.py         # مدل‌های داده (Update, Message, Chat, ...)
+└── storage.py        # OffsetStore (ذخیره‌ی offset_id)
 ```
 
-**PowerShell:**
+## شروع سریع
 
-```powershell
-$env:RUBIKA_TOKEN = "YOUR_BOT_TOKEN"
-python main.py
-```
-
-**Linux / macOS:**
-
-```bash
-export RUBIKA_TOKEN="YOUR_BOT_TOKEN"
-python main.py
-```
-
-## Basic usage
+- خیلی سریع*
 
 ```python
-from idk_rubika import Application, CommandHandler
+import asyncio
+import logging
+from rubika_bot import Application, CommandHandler, MessageHandler, filters
 
-async def start_handler(update, context):
+async def start(update, context):
     await context.bot.send_message(
         chat_id=update.chat_id,
-        text="Hello!",
+        text="سلام! به بات خوش آمدید."
     )
 
-app = Application("YOUR_BOT_TOKEN")
-app.add_handler(CommandHandler("start", start_handler))
+async def echo(update, context):
+    if update.new_message and update.new_message.text:
+        await context.bot.send_message(
+            chat_id=update.chat_id,
+            text=f"شما گفتید: {update.new_message.text}"
+        )
 
-# Start polling from an async entry point:
-# await app.run_polling()
+async def main():
+    logging.basicConfig(level=logging.INFO)
+    app = Application("YOUR_BOT_TOKEN")
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.text & ~filters.command("start"), echo))
+    await app.run_polling()
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
-## Included modules
+## نمونه‌ی تست همه‌ی متدها
 
-- `enums.py`: API enum values.
-- `models.py`: API response models such as `Update`, `Message`, `Button`, and `Keypad`.
-- `filters.py`: composable filters using `&`, `|`, and `~`.
-- `handlers.py`: message, command, event, and update handlers.
-- `context.py`: `CallbackContext` supplied to each callback.
-- `bot.py`: methods that call the Rubika Bot API.
-- `application.py`: polling loop, update dispatch, and pending-update draining.
-- `database.py`: a simple in-memory key/value store. It does **not** persist data after the process exits.
-- `example_handlers.py`: handlers used by the included `main.py` example.
+یک پوشه به اسم `test_bot/` بسازید و فایل زیر را داخلش بگذارید. این بات با دستور `/start` یک منو نشان می‌دهد که هر دکمه‌اش یک متد API را تست می‌کند.
 
-## Notes
+پوشه‌ی `assets/` را کنار `main.py` بسازید و فایل‌های تستی را داخلش بگذارید:
 
-- Async API methods run the synchronous `requests` calls in a worker thread, so they do not block the event loop while waiting for an HTTP response.
-- `_post` raises an exception for HTTP errors and rejects non-object JSON responses. Polling and handler errors are logged.
-- `filters.command()` matches the command token itself, so `/start-extra` does not accidentally match `/start`. A command such as `/start@YourBot` matches `/start`.
-- The wrapper does not validate every request field against the Rubika API. Check the API documentation for the exact parameters accepted by each endpoint.
+```
+test_bot/
+├── main.py
+└── assets/
+    ├── sample.jpg
+    ├── sample.mp4
+    ├── sample.mp3
+    ├── sample.gif.mp4
+    └── sample.pdf
+```
+
+> اگر فایل‌های نمونه ندارید، می‌توانید از هر فایل کوچکی با همان پسوند استفاده کنید. فقط حجم‌ها را در نظر بگیرید: عکس حداکثر ۱۰MB، بقیه حداکثر ۵۰MB.
+
+### اجرا
+
+```bash
+cd test_bot
+python main.py
+```
+
+بات ابتدا `getMe` می‌زند، `username` را می‌گیرد، `offsets/{username}.json` را می‌سازد/می‌خواند، و از همان offset شروع به polling می‌کند. با `/start` منوی تست باز می‌شود.
+
+## نکته‌ها
+
+- **توکن ذخیره نمی‌شود.** فقط `offset_id` در `offsets/{username}.json` ذخیره می‌شود.
+- **`offsets/` را در `.gitignore` بگذارید.**
+- برای وبهوک، از `update_bot_endpoints` استفاده کنید (نیازمند سرور HTTPS عمومی).
+- برای مشاهده‌ی همه‌ی مدل‌ها و Enumها، به `rubika_bot/models.py` و `rubika_bot/enums.py` مراجعه کنید.

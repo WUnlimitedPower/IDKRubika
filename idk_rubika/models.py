@@ -14,7 +14,7 @@ from .enums import (
     EventTypeEnum,
     MetadataTypeEnum,
     UpdateTypeEnum,
-    ChatTypeEnum
+    ChatTypeEnum,
 )
 
 
@@ -31,8 +31,25 @@ def _enum_value(enum_type, value):
 
 
 def _nested(model_type, value):
-    """Create a nested model only when the API value is a dictionary."""
-    return model_type(value) if isinstance(value, dict) else value
+    """Create a nested model from a dict, or pass through an existing model."""
+    if isinstance(value, model_type):
+        return value
+    if isinstance(value, dict):
+        return model_type(value)
+    return value
+
+
+def _nested_list(model_type, value):
+    """Create a list of models from dicts, models, or a mix of both."""
+    if not isinstance(value, list):
+        return value
+    result = []
+    for item in value:
+        if isinstance(item, model_type):
+            result.append(item)
+        elif isinstance(item, dict):
+            result.append(model_type(item))
+    return result
 
 
 # ==========================================
@@ -41,6 +58,9 @@ def _nested(model_type, value):
 
 class File:
     def __init__(self, data: dict):
+        if isinstance(data, File):
+            self.__dict__.update(data.__dict__)
+            return
         self.file_id: str = data.get("file_id", "")
         self.file_name: str = data.get("file_name", "")
         self.size: str = data.get("size", "")
@@ -48,18 +68,27 @@ class File:
 
 class Location:
     def __init__(self, data: dict):
+        if isinstance(data, Location):
+            self.__dict__.update(data.__dict__)
+            return
         self.longitude: str = data.get("longitude", "")
         self.latitude: str = data.get("latitude", "")
 
 
 class AuxData:
     def __init__(self, data: dict):
+        if isinstance(data, AuxData):
+            self.__dict__.update(data.__dict__)
+            return
         self.start_id: str = data.get("start_id", "")
         self.button_id: str = data.get("button_id", "")
 
 
 class ForwardedFrom:
     def __init__(self, data: dict):
+        if isinstance(data, ForwardedFrom):
+            self.__dict__.update(data.__dict__)
+            return
         self.type_from: str = data.get("type_from", "")
         self.message_id: str = data.get("message_id", "")
         self.from_chat_id: str = data.get("from_chat_id", "")
@@ -68,6 +97,9 @@ class ForwardedFrom:
 
 class ContactMessage:
     def __init__(self, data: dict):
+        if isinstance(data, ContactMessage):
+            self.__dict__.update(data.__dict__)
+            return
         self.phone_number: str = data.get("phone_number", "")
         self.first_name: str = data.get("first_name", "")
         self.last_name: str = data.get("last_name", "")
@@ -75,6 +107,9 @@ class ContactMessage:
 
 class PollStatus:
     def __init__(self, data: dict):
+        if isinstance(data, PollStatus):
+            self.__dict__.update(data.__dict__)
+            return
         self.state: str = data.get("state", "")
         self.selection_index: int = data.get("selection_index", -1)
         self.percent_vote_options: List[int] = data.get("percent_vote_options", [])
@@ -84,6 +119,9 @@ class PollStatus:
 
 class Poll:
     def __init__(self, data: dict):
+        if isinstance(data, Poll):
+            self.__dict__.update(data.__dict__)
+            return
         self.question: str = data.get("question", "")
         self.options: List[str] = data.get("options", [])
         self.poll_status: Optional[PollStatus] = _nested(
@@ -93,6 +131,9 @@ class Poll:
 
 class Sticker:
     def __init__(self, data: dict):
+        if isinstance(data, Sticker):
+            self.__dict__.update(data.__dict__)
+            return
         self.sticker_id: str = data.get("sticker_id", "")
         self.file: Optional[File] = _nested(File, data.get("file"))
         self.emoji_character: str = data.get("emoji_character", "")
@@ -100,6 +141,9 @@ class Sticker:
 
 class Bot:
     def __init__(self, data: dict):
+        if isinstance(data, Bot):
+            self.__dict__.update(data.__dict__)
+            return
         self.bot_id: str = data.get("bot_id", "")
         self.bot_title: str = data.get("bot_title", "")
         self.avatar: Optional[File] = _nested(File, data.get("avatar"))
@@ -111,6 +155,9 @@ class Bot:
 
 class Message:
     def __init__(self, data: dict):
+        if isinstance(data, Message):
+            self.__dict__.update(data.__dict__)
+            return
         self.message_id: str = data.get("message_id", "")
         self.text: str = data.get("text", "")
         self.time: int = data.get("time", 0)
@@ -134,6 +181,9 @@ class Message:
 
 class Event:
     def __init__(self, data: dict):
+        if isinstance(data, Event):
+            self.__dict__.update(data.__dict__)
+            return
         self.type: Optional[EventTypeEnum] = _enum_value(
             EventTypeEnum, data.get("type")
         )
@@ -154,6 +204,9 @@ class Event:
 
 class Update:
     def __init__(self, data: dict):
+        if isinstance(data, Update):
+            self.__dict__.update(data.__dict__)
+            return
         self.type: Optional[UpdateTypeEnum] = _enum_value(
             UpdateTypeEnum, data.get("type")
         )
@@ -174,6 +227,9 @@ class Update:
 
 class ButtonSelectionItem:
     def __init__(self, data: dict):
+        if isinstance(data, ButtonSelectionItem):
+            self.__dict__.update(data.__dict__)
+            return
         self.text: str = data.get("text", "")
         self.image_url: str = data.get("image_url", "")
         self.type: Optional[ButtonSelectionTypeEnum] = _enum_value(
@@ -183,6 +239,9 @@ class ButtonSelectionItem:
 
 class ButtonSelection:
     def __init__(self, data: dict):
+        if isinstance(data, ButtonSelection):
+            self.__dict__.update(data.__dict__)
+            return
         self.selection_id: str = data.get("selection_id", "")
         self.search_type: Optional[ButtonSelectionSearchEnum] = _enum_value(
             ButtonSelectionSearchEnum, data.get("search_type")
@@ -190,11 +249,9 @@ class ButtonSelection:
         self.get_type: Optional[ButtonSelectionGetEnum] = _enum_value(
             ButtonSelectionGetEnum, data.get("get_type")
         )
-        self.items: List[ButtonSelectionItem] = [
-            ButtonSelectionItem(item)
-            for item in data.get("items", [])
-            if isinstance(item, dict)
-        ]
+        self.items: List[ButtonSelectionItem] = _nested_list(
+            ButtonSelectionItem, data.get("items", [])
+        )
         self.is_multi_selection: bool = data.get("is_multi_selection", False)
         self.columns_count: str = data.get("columns_count", "")
         self.title: str = data.get("title", "")
@@ -202,6 +259,9 @@ class ButtonSelection:
 
 class ButtonCalendar:
     def __init__(self, data: dict):
+        if isinstance(data, ButtonCalendar):
+            self.__dict__.update(data.__dict__)
+            return
         self.default_value: Optional[str] = data.get("default_value")
         self.type: Optional[ButtonCalendarTypeEnum] = _enum_value(
             ButtonCalendarTypeEnum, data.get("type")
@@ -213,6 +273,9 @@ class ButtonCalendar:
 
 class ButtonNumberPicker:
     def __init__(self, data: dict):
+        if isinstance(data, ButtonNumberPicker):
+            self.__dict__.update(data.__dict__)
+            return
         self.min_value: str = data.get("min_value", "")
         self.max_value: str = data.get("max_value", "")
         self.default_value: Optional[str] = data.get("default_value")
@@ -221,6 +284,9 @@ class ButtonNumberPicker:
 
 class ButtonStringPicker:
     def __init__(self, data: dict):
+        if isinstance(data, ButtonStringPicker):
+            self.__dict__.update(data.__dict__)
+            return
         self.items: List[str] = data.get("items", [])
         self.default_value: Optional[str] = data.get("default_value")
         self.title: Optional[str] = data.get("title")
@@ -228,6 +294,9 @@ class ButtonStringPicker:
 
 class ButtonTextbox:
     def __init__(self, data: dict):
+        if isinstance(data, ButtonTextbox):
+            self.__dict__.update(data.__dict__)
+            return
         self.type_line: Optional[ButtonTextboxTypeLineEnum] = _enum_value(
             ButtonTextboxTypeLineEnum, data.get("type_line")
         )
@@ -241,6 +310,9 @@ class ButtonTextbox:
 
 class ButtonLocation:
     def __init__(self, data: dict):
+        if isinstance(data, ButtonLocation):
+            self.__dict__.update(data.__dict__)
+            return
         self.default_pointer_location = _nested(
             Location, data.get("default_pointer_location")
         )
@@ -255,6 +327,9 @@ class ButtonLocation:
 
 class Button:
     def __init__(self, data: dict):
+        if isinstance(data, Button):
+            self.__dict__.update(data.__dict__)
+            return
         self.id: str = data.get("id", "")
         self.type: Optional[ButtonTypeEnum] = _enum_value(
             ButtonTypeEnum, data.get("type")
@@ -275,27 +350,30 @@ class Button:
 
 
 class KeypadRow:
-    def __init__(self, data: dict):
-        self.buttons: List[Button] = [
-            Button(button)
-            for button in data.get("buttons", [])
-            if isinstance(button, dict)
-        ]
+    def __init__(self, data):
+        if isinstance(data, KeypadRow):
+            self.__dict__.update(data.__dict__)
+            return
+        if isinstance(data, list):
+            data = {"buttons": data}
+        self.buttons: List[Button] = _nested_list(Button, data.get("buttons", []))
 
 
 class Keypad:
-    def __init__(self, data: dict):
-        self.rows: List[KeypadRow] = [
-            KeypadRow(row)
-            for row in data.get("rows", [])
-            if isinstance(row, dict)
-        ]
+    def __init__(self, data):
+        if isinstance(data, Keypad):
+            self.__dict__.update(data.__dict__)
+            return
+        self.rows: List[KeypadRow] = _nested_list(KeypadRow, data.get("rows", []))
         self.resize_keyboard: bool = data.get("resize_keyboard", False)
         self.one_time_keyboard: bool = data.get("one_time_keyboard", False)
 
 
 class MetadataPart:
     def __init__(self, data: dict):
+        if isinstance(data, MetadataPart):
+            self.__dict__.update(data.__dict__)
+            return
         self.type: Optional[MetadataTypeEnum] = _enum_value(
             MetadataTypeEnum, data.get("type")
         )
@@ -307,15 +385,19 @@ class MetadataPart:
 
 class Metadata:
     def __init__(self, data: dict):
-        self.meta_data_parts: List[MetadataPart] = [
-            MetadataPart(part)
-            for part in data.get("meta_data_parts", [])
-            if isinstance(part, dict)
-        ]
+        if isinstance(data, Metadata):
+            self.__dict__.update(data.__dict__)
+            return
+        self.meta_data_parts: List[MetadataPart] = _nested_list(
+            MetadataPart, data.get("meta_data_parts", [])
+        )
 
 
 class Chat:
     def __init__(self, data: dict):
+        if isinstance(data, Chat):
+            self.__dict__.update(data.__dict__)
+            return
         self.chat_id: str = data.get("chat_id", "")
         self.chat_type: Optional[ChatTypeEnum] = _enum_value(
             ChatTypeEnum, data.get("chat_type")
@@ -329,12 +411,18 @@ class Chat:
 
 class BotCommand:
     def __init__(self, data: dict):
+        if isinstance(data, BotCommand):
+            self.__dict__.update(data.__dict__)
+            return
         self.command: str = data.get("command", "")
         self.description: str = data.get("description", "")
 
 
 class InlineMessage:
     def __init__(self, data: dict):
+        if isinstance(data, InlineMessage):
+            self.__dict__.update(data.__dict__)
+            return
         self.sender_id: str = data.get("sender_id", "")
         self.text: str = data.get("text", "")
         self.file: Optional[File] = _nested(File, data.get("file"))
@@ -346,11 +434,17 @@ class InlineMessage:
 
 class MessageTextUpdate:
     def __init__(self, data: dict):
+        if isinstance(data, MessageTextUpdate):
+            self.__dict__.update(data.__dict__)
+            return
         self.message_id: str = data.get("message_id", "")
         self.text: str = data.get("text", "")
 
 
 class MessageKeypadUpdate:
     def __init__(self, data: dict):
+        if isinstance(data, MessageKeypadUpdate):
+            self.__dict__.update(data.__dict__)
+            return
         self.message_id: str = data.get("message_id", "")
         self.inline_keypad: Optional[Keypad] = _nested(Keypad, data.get("inline_keypad"))

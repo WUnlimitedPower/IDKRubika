@@ -6,6 +6,7 @@ from .bot import RubikaBot
 from .context import CallbackContext
 from .handlers import Handler
 from .models import Update
+from .storage import OffsetStore
 
 
 class Application:
@@ -16,7 +17,18 @@ class Application:
         self._offset_id = ""
         self._running = False
         self.bot = RubikaBot(token, base_url)
+        self.bot_info = self.bot.get_me()
+        self.bot_username: str = self.bot_info.username or "unknown_bot"
+        self.offset_store = OffsetStore()
+        self._offset_id: str = self.offset_store.load(self.bot_username)
+        logging.info(
+            "Loaded offset for @%s: %s", self.bot_username, self._offset_id or "(empty)"
+        )
 
+    def _save_offset(self):
+        """offset فعلی رو روی دیسک ذخیره می‌کنه."""
+        if self._offset_id:
+            self.offset_store.save(self.bot_username, self._offset_id)
     def add_handler(self, handler: Handler):
         self.handlers.append(handler)
 
@@ -32,26 +44,19 @@ class Application:
     async def _drain_pending_updates(self, max_rounds: int = 20):
         """Discard old pending updates and keep the latest server offset."""
         logging.info("Draining pending updates...")
-        probe_offset = ""
-        last_offset = ""
+        probe_offset = self._offset_id  # از offset ذخیره‌شده شروع کن
+        last_offset = self._offset_id
 
         for _ in range(max_rounds):
             try:
-                response = await asyncio.to_thread(
-                    self.bot.get_updates, offset_id=probe_offset, limit=100
+                updates, next_offset = await self.bot.get_updates(
+                    offset_id=probe_offset, limit=100
                 )
-                if response.get("status") == "INVALID_INPUT":
-                    logging.warning("Drain skipped: INVALID_INPUT from server.")
-                    self._offset_id = last_offset
-                    return
-
-                data = response.get("data", {})
-                updates = data.get("updates", [])
-                next_offset = data.get("next_offset_id")
 
                 if not updates:
                     logging.info("No more pending updates. Drain complete.")
                     self._offset_id = next_offset or last_offset
+                    self._save_offset()
                     return
 
                 if not next_offset:
@@ -59,10 +64,13 @@ class Application:
                         "Drain stopped because the response did not contain next_offset_id."
                     )
                     self._offset_id = last_offset
+                    self._save_offset()
                     return
 
                 last_offset = next_offset
                 probe_offset = next_offset
+                self._offset_id = next_offset
+                self._save_offset()
                 logging.info(
                     "Drained %s pending updates, offset=%s", len(updates), last_offset
                 )
@@ -70,12 +78,15 @@ class Application:
             except Exception as error:
                 logging.error("Error during drain: %s", error, exc_info=True)
                 self._offset_id = last_offset
+                self._save_offset()
                 return
 
         logging.warning(
             "Drain reached max rounds; there might still be pending updates."
         )
         self._offset_id = last_offset
+        self._save_offset()
+
 
     async def run_polling(self, poll_interval: float = 1.0, drop_pending: bool = True):
         if poll_interval < 0:
@@ -85,40 +96,33 @@ class Application:
             await self._drain_pending_updates()
 
         self._running = True
-        logging.info("Bot started polling...")
+        logging.info(
+            "Bot @%s started polling from offset=%s",
+            self.bot_username,
+            self._offset_id or "(empty)",
+        )
 
         while self._running:
             try:
-                response = await asyncio.to_thread(
-                    self.bot.get_updates, offset_id=self._offset_id, limit=100
+                updates, next_offset = await self.bot.get_updates(
+                    offset_id=self._offset_id, limit=100
                 )
 
-                if response.get("status") == "INVALID_INPUT":
-                    logging.warning("Invalid offset, resetting to empty.")
-                    self._offset_id = ""
-                    await asyncio.sleep(poll_interval)
-                    continue
-
-                data = response.get("data", {})
-                updates_raw = data.get("updates", [])
-                next_offset = data.get("next_offset_id")
-
-                for raw_update in updates_raw:
-                    try:
-                        update = Update(raw_update)
-                    except (TypeError, ValueError, AttributeError) as error:
-                        logging.error("Could not parse update: %s", error, exc_info=True)
-                        continue
+                for update in updates:
                     await self._process_update(update)
 
                 if next_offset:
                     self._offset_id = next_offset
+                    self._save_offset()
 
                 await asyncio.sleep(poll_interval)
 
             except Exception as error:
                 logging.error("Polling error: %s", error, exc_info=True)
                 await asyncio.sleep(5)
+
+        def stop(self):
+            self._running = False
 
     def stop(self):
         self._running = False
