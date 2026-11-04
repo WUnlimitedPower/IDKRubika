@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import List, Optional
 
 from .enums import (
     ButtonCalendarTypeEnum,
@@ -14,6 +14,7 @@ from .enums import (
     EventTypeEnum,
     MetadataTypeEnum,
     UpdateTypeEnum,
+    ChatTypeEnum
 )
 
 
@@ -311,3 +312,45 @@ class Metadata:
             for part in data.get("meta_data_parts", [])
             if isinstance(part, dict)
         ]
+
+
+class Chat:
+    def __init__(self, data: dict):
+        self.chat_id: str = data.get("chat_id", "")
+        self.chat_type: Optional[ChatTypeEnum] = _enum_value(
+            ChatTypeEnum, data.get("chat_type")
+        )
+        self.user_id: str = data.get("user_id", "")
+        self.first_name: str = data.get("first_name", "")
+        self.last_name: str = data.get("last_name", "")
+        self.title: str = data.get("title", "")
+        self.username: str = data.get("username", "")
+
+
+class BotCommand:
+    def __init__(self, data: dict):
+        self.command: str = data.get("command", "")
+        self.description: str = data.get("description", "")
+
+
+class InlineMessage:
+    def __init__(self, data: dict):
+        self.sender_id: str = data.get("sender_id", "")
+        self.text: str = data.get("text", "")
+        self.file: Optional[File] = _nested(File, data.get("file"))
+        self.location: Optional[Location] = _nested(Location, data.get("location"))
+        self.aux_data: Optional[AuxData] = _nested(AuxData, data.get("aux_data"))
+        self.message_id: str = data.get("message_id", "")
+        self.chat_id: str = data.get("chat_id", "")
+
+
+class MessageTextUpdate:
+    def __init__(self, data: dict):
+        self.message_id: str = data.get("message_id", "")
+        self.text: str = data.get("text", "")
+
+
+class MessageKeypadUpdate:
+    def __init__(self, data: dict):
+        self.message_id: str = data.get("message_id", "")
+        self.inline_keypad: Optional[Keypad] = _nested(Keypad, data.get("inline_keypad"))

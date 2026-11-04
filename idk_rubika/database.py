@@ -7,7 +7,7 @@ class Database:
     def __init__(self):
         self._tables: Dict[str, Dict[str, dict]] = {}
 
-    def create_table(self, name: str, schema: dict = None):
+    def create_table(self, name: str, schema: Optional[dict] = None):
         if name not in self._tables:
             self._tables[name] = {}
 

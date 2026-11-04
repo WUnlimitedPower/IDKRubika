@@ -105,3 +105,43 @@ class MetadataTypeEnum(str, Enum):
     MentionText = "MentionText"
     Pre = "Pre"
     Quote = "Quote"
+
+
+class ChatTypeEnum(str, Enum):
+    User = "User"
+    Bot = "Bot"
+    Group = "Group"
+    Channel = "Channel"
+
+
+class FileTypeEnum(str, Enum):
+    File = "File"
+    Image = "Image"
+    Voice = "Voice"
+    Video = "Video"
+    Music = "Music"
+    Gif = "Gif"
+
+
+class ForwardedFromEnum(str, Enum):
+    User = "User"
+    Channel = "Channel"
+    Bot = "Bot"
+
+
+class PollStatusEnum(str, Enum):
+    Open = "Open"
+    Closed = "Closed"
+
+
+class MessageSenderEnum(str, Enum):
+    User = "User"
+    Bot = "Bot"
+
+
+class UpdateEndpointTypeEnum(str, Enum):
+    ReceiveUpdate = "ReceiveUpdate"
+    ReceiveInlineMessage = "ReceiveInlineMessage"
+    ReceiveQuery = "ReceiveQuery"
+    GetSelectionItem = "GetSelectionItem"
+    SearchSelectionItems = "SearchSelectionItems"
