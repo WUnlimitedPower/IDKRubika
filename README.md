@@ -1,7 +1,8 @@
-# Rubika Bot Framework
+# Rubika Bot Some Codes for C+V in Projects
+## فقط یسری کد برای کپی پیسته 
 ### In Python
 
-یک فریم‌ورک سبک برای ساخت بات در پیام‌رسان **روبیکا**، با الهام از `python-telegram-bot`. تمام متدهای رسمی [Rubika Bot API](https://rubika.ir/botapi) پوشش داده شده‌اند و خروجی متدها به‌جای `dict` خام، مدل‌های تایپ‌شده (مثل `Message`، `Chat`، `Update`، `File`) هستند.
+یکم کد برای ساخت بات در پیام‌رسان **روبیکا**، با الهام از `python-telegram-bot`. تمام متدهای رسمی [Rubika Bot API](https://rubika.ir/botapi) پوشش داده شده‌اند و خروجی متدها به‌جای `dict` خام، مدل‌های تایپ‌شده (مثل `Message`، `Chat`، `Update`، `File`) هستند.
 
 ## ویژگی‌ها
 
