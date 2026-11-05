@@ -141,6 +141,7 @@ class Application(RubikaBot):
 
                 for update in updates:
                     await self._process_update(update)
+                    self.do_for_messages_database(update)
 
                 if next_offset:
                     self._offset_id = next_offset
