@@ -154,13 +154,16 @@ class Bot:
 
 
 class Message:
-    def __init__(self, data: dict):
+    from .bot import RubikaBot
+    def __init__(self, data: dict,chat_id: str, bot: RubikaBot):
+        self.bot = bot
         if isinstance(data, Message):
             self.__dict__.update(data.__dict__)
             return
         self.message_id: str = data.get("message_id", "")
         self.text: str = data.get("text", "")
         self.time: int = data.get("time", 0)
+        self.chat_id: str = chat_id
         self.is_edited: bool = data.get("is_edited", False)
         self.sender_type: str = data.get("sender_type", "")
         self.sender_id: str = data.get("sender_id", "")
@@ -177,6 +180,12 @@ class Message:
             ContactMessage, data.get("contact_message")
         )
         self.poll: Optional[Poll] = _nested(Poll, data.get("poll"))
+
+    def reply_text(self,text: str):
+        return self.bot.send_message(
+            chat_id=self.chat_id,text=text,
+            reply_to_message_id=self.reply_to_message_id
+        )
 
 
 class Event:
@@ -201,9 +210,16 @@ class Event:
             EventJoinTypeEnum, data.get("join_type")
         )
 
+def _msg_nested(data,bot,chat_id):
+    if isinstance(data, Message):
+        return data
+    if isinstance(data, dict):
+        return Message(data,chat_id,bot)
+    return data
+
 
 class Update:
-    def __init__(self, data: dict):
+    def __init__(self, data: dict , bot):
         if isinstance(data, Update):
             self.__dict__.update(data.__dict__)
             return
@@ -212,11 +228,11 @@ class Update:
         )
         self.chat_id: str = data.get("chat_id", "")
         self.removed_message_id: Optional[str] = data.get("removed_message_id")
-        self.new_message: Optional[Message] = _nested(
-            Message, data.get("new_message")
+        self.new_message: Optional[Message] = _msg_nested(
+           data.get("new_message"),bot,self.chat_id
         )
-        self.updated_message: Optional[Message] = _nested(
-            Message, data.get("updated_message")
+        self.updated_message: Optional[Message] = _msg_nested(
+            data.get("updated_message"),bot,self.chat_id
         )
         self.event_data: Optional[Event] = _nested(Event, data.get("event_data"))
 

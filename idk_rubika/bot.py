@@ -6,8 +6,7 @@ import logging
 
 from .models import (
     Bot, Chat, BotCommand, Message, Update,
-    File, Keypad, InlineMessage,
-    MessageTextUpdate, MessageKeypadUpdate,
+    File, Keypad,
 )
 from .enums import (
     FileTypeEnum, UpdateEndpointTypeEnum, ChatKeypadTypeEnum,
@@ -36,13 +35,12 @@ class RubikaBot:
             raise ValueError(f"Invalid response from Rubika API for {method}: expected a JSON object")
         return result
 
-    @staticmethod
-    def _extract_message(result: dict) -> Optional[Message]:
+    def _extract_message(self,chat_id,result: dict) -> Optional[Message]:
         """از پاسخ sendMessage/sendPoll/... مدل Message می‌سازه (اگه موجود باشه)"""
         data = result.get("data", {})
         msg = data.get("message")
         if isinstance(msg, dict):
-            return Message(msg)
+            return Message(msg,chat_id,self)
         return None
 
     def get_me(self) -> Bot:
@@ -51,25 +49,25 @@ class RubikaBot:
     async def get_updates(self, offset_id: str = "", limit: int = 100) -> tuple[List[Update], str]:
         result = await asyncio.to_thread(self._post, "getUpdates", {"offset_id": offset_id, "limit": limit})
         data = result.get("data", {})
-        updates = [Update(u) for u in data.get("updates", []) if isinstance(u, dict)]
+        updates = [Update(u,self) for u in data.get("updates", []) if isinstance(u, dict)]
         next_offset = data.get("next_offset_id", "")
         return updates, next_offset
     
     async def send_message(self, chat_id: str, text: str, **kwargs) -> Optional[Message]:
         data = {"chat_id": chat_id, "text": text, **kwargs}
         result = await asyncio.to_thread(self._post, "sendMessage", data)
-        return self._extract_message(result)
+        return self._extract_message(chat_id,result)
     
     
     async def send_poll(self, chat_id: str, question: str, options: List[str], **kwargs) -> Optional[Message]:
         data = {"chat_id": chat_id, "question": question, "options": options, **kwargs}
         result = await asyncio.to_thread(self._post, "sendPoll", data)
-        return self._extract_message(result)
+        return self._extract_message(chat_id,result)
     
     async def send_location(self, chat_id: str, latitude: str, longitude: str, **kwargs) -> Optional[Message]:
         data = {"chat_id": chat_id, "latitude": latitude, "longitude": longitude, **kwargs}
         result = await asyncio.to_thread(self._post, "sendLocation", data)
-        return self._extract_message(result)
+        return self._extract_message(chat_id,result)
     
     async def send_contact(self, chat_id: str, first_name: str, last_name: str, phone_number: str, **kwargs) -> Optional[Message]:
         data = {
@@ -80,7 +78,7 @@ class RubikaBot:
             **kwargs,
         }
         result = await asyncio.to_thread(self._post, "sendContact", data)
-        return self._extract_message(result)
+        return self._extract_message(chat_id,result)
 
     async def get_chat(self, chat_id: str) -> Chat:
         result = await asyncio.to_thread(self._post, "getChat", {"chat_id": chat_id})
@@ -189,7 +187,7 @@ class RubikaBot:
         if caption:
             data["text"] = caption
         result = await asyncio.to_thread(self._post, "sendFile", data)
-        return self._extract_message(result)
+        return self._extract_message(chat_id,result)
 
     async def send_photo(self, chat_id: str, photo_path: str, caption: str = "", **kwargs) -> Optional[Message]:
         return await self._send_file_common(chat_id, photo_path, FileTypeEnum.Image, caption, **kwargs)
