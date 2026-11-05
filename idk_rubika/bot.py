@@ -62,12 +62,21 @@ class RubikaBot:
         updates = [Update(u,self) for u in data.get("updates", []) if isinstance(u, dict)]
         next_offset = data.get("next_offset_id", "")
         return updates, next_offset
+
+
     
-    async def send_message(self, chat_id: str, text: str, **kwargs) -> Optional[Message]:
+    async def send_message(self, chat_id: str, text: str, reply_id: Optional[str] = None, **kwargs) -> Optional[Message]:
         data = {"chat_id": chat_id, "text": text, **kwargs}
+        
+        if reply_id is not None:
+            data["reply_to_message_id"] = reply_id
+        
         result = await asyncio.to_thread(self._post, "sendMessage", data)
         return self._extract_message(chat_id,result)
     
+
+
+
     
     async def send_poll(self, chat_id: str, question: str, options: List[str], **kwargs) -> Optional[Message]:
         data = {"chat_id": chat_id, "question": question, "options": options, **kwargs}

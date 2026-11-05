@@ -220,7 +220,7 @@ async def on_message_removed(update, context):
 # ---------------------------------------------------------
 
 async def main():
-    app = Application("YOUR_BOT_TOKEN")
+    app = Application("BOT_TOKEN")
 
     # دستورات
     app.add_handler(CommandHandler("start", cmd_start))

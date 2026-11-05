@@ -1,4 +1,8 @@
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from .bot import RubikaBot
 
 from .enums import (
     ButtonCalendarTypeEnum,
@@ -152,15 +156,15 @@ class Bot:
         self.start_message: str = data.get("start_message", "")
         self.share_url: str = data.get("share_url", "")
 
-
 class Message:
-    from .bot import RubikaBot
-    def __init__(self, data: dict,chat_id: str, bot: RubikaBot):
+    def __init__(self, data: dict, chat_id: str, bot: "RubikaBot"):
         self.bot = bot
-        self.data: dict = data
+        self.data = data
+
         if isinstance(data, Message):
             self.__dict__.update(data.__dict__)
             return
+
         self.message_id: str = data.get("message_id", "")
         self.text: str = data.get("text", "")
         self.time: int = data.get("time", 0)
@@ -168,24 +172,31 @@ class Message:
         self.is_edited: bool = data.get("is_edited", False)
         self.sender_type: str = data.get("sender_type", "")
         self.sender_id: str = data.get("sender_id", "")
-        self.aux_data: Optional[AuxData] = _nested(AuxData, data.get("aux_data"))
+        self.aux_data: Optional[AuxData] = _nested(
+            AuxData, data.get("aux_data")
+        )
         self.file: Optional[File] = _nested(File, data.get("file"))
         self.reply_to_message_id: str = data.get("reply_to_message_id", "")
         self.forwarded_from: Optional[ForwardedFrom] = _nested(
             ForwardedFrom, data.get("forwarded_from")
         )
         self.forwarded_no_link: str = data.get("forwarded_no_link", "")
-        self.location: Optional[Location] = _nested(Location, data.get("location"))
-        self.sticker: Optional[Sticker] = _nested(Sticker, data.get("sticker"))
+        self.location: Optional[Location] = _nested(
+            Location, data.get("location")
+        )
+        self.sticker: Optional[Sticker] = _nested(
+            Sticker, data.get("sticker")
+        )
         self.contact_message: Optional[ContactMessage] = _nested(
             ContactMessage, data.get("contact_message")
         )
         self.poll: Optional[Poll] = _nested(Poll, data.get("poll"))
 
-    def reply_text(self,text: str):
+    def reply_text(self, text: str):
         return self.bot.send_message(
-            chat_id=self.chat_id,text=text,
-            reply_to_message_id=self.reply_to_message_id
+            chat_id=self.chat_id,
+            text=text,
+            reply_to_message_id=self.message_id
         )
 
 

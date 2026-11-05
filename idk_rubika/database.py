@@ -34,22 +34,41 @@ class Database:
     # db.set("users", {"id": 1, "name": "Ali"})
     # ---------------------------------------------------------------
     def set(self, table: str, data: dict[str, Any]) -> None:
+        if not data:
+            raise ValueError("Data cannot be empty.")
+
         key = next(iter(data))
         key_value = data[key]
 
         if self.exist(table, {key: key_value}):
-            assignments = ", ".join(f"{k} = ?" for k in data if k != key)
-            values = tuple(v for k, v in data.items() if k != key) + (key_value,)
+            assignments = ", ".join(
+                f"{column} = ?"
+                for column in data
+                if column != key
+            )
+
+            if not assignments:
+                return
+
+            values = tuple(
+                value
+                for column, value in data.items()
+                if column != key
+            ) + (key_value,)
+
             self.cursor.execute(
-                f"UPDATE {table} SET {assignments} WHERE {key} = ?", values
+                f"UPDATE {table} SET {assignments} WHERE {key} = ?",
+                values
             )
         else:
-            keys = ", ".join(data.keys())
+            columns = ", ".join(data.keys())
             placeholders = ", ".join("?" for _ in data)
+
             self.cursor.execute(
-                f"INSERT INTO {table} ({keys}) VALUES ({placeholders})",
-                tuple(data.values()),
+                f"INSERT INTO {table} ({columns}) VALUES ({placeholders})",
+                tuple(data.values())
             )
+
         self.connection.commit()
 
     # ---------------------------------------------------------------
