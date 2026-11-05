@@ -199,6 +199,33 @@ class Message:
             reply_to_message_id=self.message_id
         )
 
+    def reply_video(self, text: str):
+        return self.bot.send_message(
+            chat_id=self.chat_id,
+            text=text,
+            reply_to_message_id=self.message_id
+        )
+
+    def reply_photo(self, text: str):
+        return self.bot.send_message(
+            chat_id=self.chat_id,
+            text=text,
+            reply_to_message_id=self.message_id
+        )
+    
+    def delete(self):
+        return self.bot.delete_message(
+            chat_id=self.chat_id,
+            message_id=self.message_id
+        )
+
+    def forward(self, to_chat_id: str):
+        return self.bot.forward_message(
+            from_chat_id=self.chat_id,
+            message_id=self.message_id,
+            to_chat_id=to_chat_id
+        )
+
 
 class Event:
     def __init__(self, data: dict):
