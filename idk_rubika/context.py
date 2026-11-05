@@ -1,12 +1,12 @@
 from typing import Any, Dict, TYPE_CHECKING
 
-from .models import Update
 
 if TYPE_CHECKING:
     from .bot import RubikaBot
 
 
 class CallbackContext:
+    from .models import Update
     def __init__(self, bot: "RubikaBot", update: Update):
         self.bot = bot
         self.update = update

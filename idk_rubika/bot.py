@@ -12,11 +12,15 @@ from .enums import (
     FileTypeEnum, UpdateEndpointTypeEnum, ChatKeypadTypeEnum,
 )
 
+from .database import Database
+
+
 class RubikaBot:
     def __init__(self, token: str, base_url: str = "https://botapi.rubika.ir/v3/"):
         self.token = token
         self.base_url = base_url.rstrip("/") + "/"
         self.timeout = 30
+        self.message_database: Database = Database("messages.db")
 
     def _post(self, method: str, data: Optional[dict] = None, timeout: int = -1) -> dict:
         if timeout < 0:
@@ -42,6 +46,12 @@ class RubikaBot:
         if isinstance(msg, dict):
             return Message(msg,chat_id,self)
         return None
+
+    def get_message(self,chat_id: str, message_id: str) -> Optional[Message]:
+        return self.message_database.get(
+            "message",{"chat_id": chat_id,"message_id": message_id}
+        )
+
 
     def get_me(self) -> Bot:
         return Bot(self._post("getMe").get("data", {}).get("bot", {}))

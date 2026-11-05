@@ -157,6 +157,7 @@ class Message:
     from .bot import RubikaBot
     def __init__(self, data: dict,chat_id: str, bot: RubikaBot):
         self.bot = bot
+        self.data: dict = data
         if isinstance(data, Message):
             self.__dict__.update(data.__dict__)
             return

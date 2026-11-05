@@ -9,21 +9,52 @@ from .models import Update
 from .storage import OffsetStore
 
 
-class Application:
+class Application(RubikaBot):
     def __init__(self, token: str, base_url: str = "https://botapi.rubika.ir/v3/"):
         self.token = token
         self.base_url = base_url
         self.handlers: List[Handler] = []
         self._offset_id = ""
         self._running = False
-        self.bot = RubikaBot(token, base_url)
-        self.bot_info = self.bot.get_me()
+        self.bot_info = self.get_me()
         self.bot_username: str = self.bot_info.username or "unknown_bot"
         self.offset_store = OffsetStore()
         self._offset_id: str = self.offset_store.load(self.bot_username)
+        self.message_database.create_table(
+            "message",
+            {
+                "id": "TEXT",
+                "chat_id": "TEXT", 
+                "data": "TEXT"
+            }
+        )
+
         logging.info(
             "Loaded offset for @%s: %s", self.bot_username, self._offset_id or "(empty)"
         )
+
+
+    def do_for_messages_database(self,update: Update):
+
+        if update.new_message:
+            message = update.new_message
+        elif update.updated_message:
+            message = update.updated_message
+        else:
+            if update.removed_message_id:
+                self.message_database.remove(
+                    "message",{"id": update.removed_message_id,"chat_id":update.chat_id}
+                )
+                return
+            return
+        
+        self.message_database.set("message",{
+            'id': message.message_id,
+            'chat_id': update.chat_id,
+            'data': message.data
+        })
+        
+    
 
     def _save_offset(self):
         """offset فعلی رو روی دیسک ذخیره می‌کنه."""
@@ -33,7 +64,7 @@ class Application:
         self.handlers.append(handler)
 
     async def _process_update(self, update: Update):
-        context = CallbackContext(self.bot, update)
+        context = CallbackContext(self, update)
         for handler in self.handlers:
             if handler.check(update):
                 try:
@@ -49,7 +80,7 @@ class Application:
 
         for _ in range(max_rounds):
             try:
-                updates, next_offset = await self.bot.get_updates(
+                updates, next_offset = await self.get_updates(
                     offset_id=probe_offset, limit=100
                 )
 
@@ -104,7 +135,7 @@ class Application:
 
         while self._running:
             try:
-                updates, next_offset = await self.bot.get_updates(
+                updates, next_offset = await self.get_updates(
                     offset_id=self._offset_id, limit=100
                 )
 
