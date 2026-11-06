@@ -43,32 +43,21 @@ rubika_bot/
 - خیلی سریع*
 
 ```python
-import asyncio
-import logging
-from rubika_bot import Application, CommandHandler, MessageHandler, filters
+from rubika_bot import Application, CommandHandler
 
 async def start(update, context):
-    await context.bot.send_message(
-        chat_id=update.chat_id,
-        text="سلام! به بات خوش آمدید."
+    await update.message.reply_text(
+        "سلام! به بات خوش آمدید."
     )
 
-async def echo(update, context):
-    if update.new_message and update.new_message.text:
-        await context.bot.send_message(
-            chat_id=update.chat_id,
-            text=f"شما گفتید: {update.new_message.text}"
-        )
 
-async def main():
-    logging.basicConfig(level=logging.INFO)
+def main():
     app = Application("YOUR_BOT_TOKEN")
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.text & ~filters.command("start"), echo))
-    await app.run_polling()
+    app.run_polling()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
 ```
 
 ## نمونه‌ی تست همه‌ی متدها
