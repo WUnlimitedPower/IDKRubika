@@ -121,8 +121,10 @@ class Application(RubikaBot):
         self._offset_id = last_offset
         self._save_offset()
 
+    def run_polling(self, poll_interval: float = 1.0, drop_pending: bool = True):
+        asyncio.run(self._run_polling(poll_interval, drop_pending))
 
-    async def run_polling(self, poll_interval: float = 1.0, drop_pending: bool = True):
+    async def _run_polling(self, poll_interval: float = 1.0, drop_pending: bool = True):
         if poll_interval < 0:
             raise ValueError("poll_interval cannot be negative")
 

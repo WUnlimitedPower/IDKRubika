@@ -219,7 +219,7 @@ async def on_message_removed(update, context):
 # main
 # ---------------------------------------------------------
 
-async def main():
+def main():
     app = Application("YOUR_BOT_TOKEN")
 
     # دستورات
@@ -239,8 +239,8 @@ async def main():
     app.add_handler(UpdateHandler(UpdateTypeEnum.UpdatedMessage, on_message_edited))
     app.add_handler(UpdateHandler(UpdateTypeEnum.RemovedMessage, on_message_removed))
 
-    await app.run_polling()
+    app.run_polling()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

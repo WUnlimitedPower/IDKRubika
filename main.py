@@ -23,7 +23,7 @@ from idk_rubika.example_handlers import (
 )
 
 
-async def main():
+def main():
     token = os.getenv("RUBIKA_TOKEN", "").strip()
     if not token:
         raise RuntimeError(
@@ -47,7 +47,7 @@ async def main():
     app.add_handler(UpdateHandler(UpdateTypeEnum.UpdatedMessage, on_message_edited))
     app.add_handler(UpdateHandler(UpdateTypeEnum.RemovedMessage, on_message_removed))
 
-    await app.run_polling()
+    app.run_polling()
 
 
 if __name__ == "__main__":
@@ -56,6 +56,6 @@ if __name__ == "__main__":
         format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
     )
     try:
-        asyncio.run(main())
+        main()
     except KeyboardInterrupt:
         print("Bot stopped.")
