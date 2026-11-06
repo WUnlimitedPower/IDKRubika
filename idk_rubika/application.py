@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import json
 from typing import List
 
 from .bot import RubikaBot
@@ -10,7 +11,9 @@ from .storage import OffsetStore
 
 
 class Application(RubikaBot):
-    def __init__(self, token: str, base_url: str = "https://botapi.rubika.ir/v3/"):
+
+    def __init__(self, token: str,timeout: int = 30, base_url: str = "https://botapi.rubika.ir/v3/"):
+        super().__init__(token, timeout, base_url)
         self.token = token
         self.base_url = base_url
         self.handlers: List[Handler] = []
@@ -51,7 +54,7 @@ class Application(RubikaBot):
         self.message_database.set("message",{
             'id': message.message_id,
             'chat_id': update.chat_id,
-            'data': message.data
+            'data': json.dumps(message.data, ensure_ascii=False)
         })
         
     

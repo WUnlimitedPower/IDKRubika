@@ -19,13 +19,12 @@ from idk_rubika.example_handlers import (
     on_message_edited,
     on_message_removed,
     start_handler,
+    delete_handler
 )
 
 
 async def main():
-    # token = os.getenv("RUBIKA_TOKEN", "").strip()
-    token = "CIAACH0RNMCNNWUTZURGFYKOIUPHVZTBAUBDUNVHAZBGQIGPSJZKNBNFPQWBKRFT"
-
+    token = os.getenv("RUBIKA_TOKEN", "").strip()
     if not token:
         raise RuntimeError(
             "Rubika token not found. Set the RUBIKA_TOKEN environment variable first."
@@ -35,8 +34,9 @@ async def main():
 
     # Message handlers
     app.add_handler(CommandHandler("start", start_handler))
+    app.add_handler(CommandHandler("delete", delete_handler))
     app.add_handler(
-        MessageHandler(filters.text & ~filters.command("start"), echo_handler)
+        MessageHandler(filters.text & ~filters.command(["start","delete"]), echo_handler)
     )
 
     # Event handlers

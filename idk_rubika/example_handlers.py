@@ -6,10 +6,19 @@ from .models import Update
 
 async def start_handler(update: Update, context: CallbackContext):
     if update.new_message:
-        await context.bot.send_message(
-            chat_id=update.chat_id,
-            text="سلام! به بات خوش آمدید.",
+        await update.new_message.reply_photo(
+            "start.jpeg",
+            "سلام! به بات خوش آمدید."
         )
+
+
+async def delete_handler(update: Update, context: CallbackContext):
+    if update.new_message:
+        result = await update.new_message.delete()
+        if result.deleted:
+            logging.info("Message deleted")
+        else:
+            logging.info("Bot cannot delete the message")
 
 
 async def echo_handler(update: Update, context: CallbackContext):

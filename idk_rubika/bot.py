@@ -1,12 +1,13 @@
 import asyncio
 from typing import List, Optional
 
+import json
 import requests
 import logging
 
 from .models import (
     Bot, Chat, BotCommand, Message, Update,
-    File, Keypad,
+    File, Keypad,DeleteResult
 )
 from .enums import (
     FileTypeEnum, UpdateEndpointTypeEnum, ChatKeypadTypeEnum,
@@ -16,10 +17,10 @@ from .database import Database
 
 
 class RubikaBot:
-    def __init__(self, token: str, base_url: str = "https://botapi.rubika.ir/v3/"):
+    def __init__(self, token: str,timeout: int = 30, base_url: str = "https://botapi.rubika.ir/v3/"):
         self.token = token
         self.base_url = base_url.rstrip("/") + "/"
-        self.timeout = 30
+        self.timeout = timeout
         self.message_database: Database = Database("messages.db")
 
     def _post(self, method: str, data: Optional[dict] = None, timeout: int = -1) -> dict:
@@ -48,9 +49,10 @@ class RubikaBot:
         return None
 
     def get_message(self,chat_id: str, message_id: str) -> Optional[Message]:
-        return self.message_database.get(
+        data: dict = json.loads(self.message_database.get(
             "message",{"chat_id": chat_id,"message_id": message_id}
-        )
+        )) 
+        return data['data']
 
 
     def get_me(self) -> Bot:
@@ -121,9 +123,9 @@ class RubikaBot:
         }
         return await asyncio.to_thread(self._post, "editMessageKeypad", data)
     
-    async def delete_message(self, chat_id: str, message_id: str):
+    async def delete_message(self, chat_id: str, message_id: str) -> DeleteResult:
         data = {"chat_id": chat_id, "message_id": message_id}
-        return await asyncio.to_thread(self._post, "deleteMessage", data)
+        return DeleteResult(await asyncio.to_thread(self._post, "deleteMessage", data))
 
     async def set_commands(self, bot_commands: List[BotCommand]):
         data = {
