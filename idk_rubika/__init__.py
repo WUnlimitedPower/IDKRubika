@@ -2,7 +2,7 @@
 
 from .application import Application
 from .bot import RubikaBot
-from .context import CallbackContext
+from .context import Context
 from .database import Database
 from .enums import (
     ButtonCalendarTypeEnum,
@@ -59,7 +59,7 @@ from .models import (
 __all__ = [
     "Application",
     "RubikaBot",
-    "CallbackContext",
+    "Context",
     "Database",
     "BaseFilter",
     "AndFilter",

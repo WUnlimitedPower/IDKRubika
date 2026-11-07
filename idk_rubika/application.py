@@ -4,7 +4,7 @@ import json
 from typing import List
 
 from .bot import RubikaBot
-from .context import CallbackContext
+from .context import Context
 from .handlers import Handler
 from .models import Update
 from .storage import OffsetStore
@@ -67,7 +67,7 @@ class Application(RubikaBot):
         self.handlers.append(handler)
 
     async def _process_update(self, update: Update):
-        context = CallbackContext(self, update)
+        context = Context(self, update)
         for handler in self.handlers:
             if handler.check(update):
                 try:

@@ -1,6 +1,6 @@
 from typing import Awaitable, Callable, Optional
 
-from .context import CallbackContext
+from .context import Context
 from .enums import EventTypeEnum, UpdateTypeEnum
 from .filters import BaseFilter, filters
 from .models import Update
@@ -9,7 +9,7 @@ from .models import Update
 class Handler:
     def __init__(
         self,
-        callback: Callable[[Update, CallbackContext], Awaitable[None]],
+        callback: Callable[[Update, Context], Awaitable[None]],
         filter_: Optional[BaseFilter] = None,
     ):
         self.callback = callback
