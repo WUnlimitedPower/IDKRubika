@@ -24,7 +24,7 @@ from idk_rubika.example_handlers import (
 
 
 def main():
-    token = "CIICGA0GYVLWRKPEUUMHPYHJDYYVBVJPTZLFNDLEPJIFGMXHXNINFKJOKKYRUFGL"
+    token = os.getenv("RUBIKA_TOKEN", "").strip()
     if not token:
         raise RuntimeError(
             "Rubika token not found. Set the RUBIKA_TOKEN environment variable first."
