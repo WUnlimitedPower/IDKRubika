@@ -215,127 +215,83 @@ class Message:
             logging.error("Delayed delete failed: %s", error, exc_info=True)
 
     # ---- reply_* ----
-
-    async def reply_text(self, text: str, delete_after: Optional[float] = None):
+    async def reply_text(self, text: str, parse_mode: str = "MARKDOWN", delete_after: Optional[float] = None):
         sent = await self.bot.send_message(
             chat_id=self.chat_id,
             text=text,
+            parse_mode=parse_mode,
             reply_to_message_id=self.message_id,
         )
         if sent and delete_after is not None:
             await sent.delete(delete_after=delete_after)
         return sent
 
-    async def reply_photo(self, photo: str, caption: str, delete_after: Optional[float] = None):
+    async def reply_photo(self, photo: str, caption: str, parse_mode: str = "MARKDOWN", delete_after: Optional[float] = None):
         sent = await self.bot.send_photo(
             chat_id=self.chat_id,
             photo_path=photo,
             caption=caption,
+            parse_mode=parse_mode,
             reply_to_message_id=self.message_id,
         )
         if sent and delete_after is not None:
             await sent.delete(delete_after=delete_after)
         return sent
 
-    async def reply_video(self, video: str, caption: str, delete_after: Optional[float] = None):
+    async def reply_video(self, video: str, caption: str, parse_mode: str = "MARKDOWN", delete_after: Optional[float] = None):
         sent = await self.bot.send_video(
             chat_id=self.chat_id,
             video_path=video,
             caption=caption,
+            parse_mode=parse_mode,
             reply_to_message_id=self.message_id,
         )
         if sent and delete_after is not None:
             await sent.delete(delete_after=delete_after)
         return sent
 
-    async def reply_document(self, document: str, caption: str, delete_after: Optional[float] = None):
+    async def reply_document(self, document: str, caption: str, parse_mode: str = "MARKDOWN", delete_after: Optional[float] = None):
         sent = await self.bot.send_document(
             chat_id=self.chat_id,
             file_path=document,
             caption=caption,
+            parse_mode=parse_mode,
             reply_to_message_id=self.message_id,
         )
         if sent and delete_after is not None:
             await sent.delete(delete_after=delete_after)
         return sent
 
-    async def reply_music(self, music: str, caption: str, delete_after: Optional[float] = None):
+    async def reply_music(self, music: str, caption: str, parse_mode: str = "MARKDOWN", delete_after: Optional[float] = None):
         sent = await self.bot.send_music(
             chat_id=self.chat_id,
             music_path=music,
             caption=caption,
+            parse_mode=parse_mode,
             reply_to_message_id=self.message_id,
         )
         if sent and delete_after is not None:
             await sent.delete(delete_after=delete_after)
         return sent
 
-    async def reply_voice(self, voice: str, caption: str, delete_after: Optional[float] = None):
+    async def reply_voice(self, voice: str, caption: str, parse_mode: str = "MARKDOWN", delete_after: Optional[float] = None):
         sent = await self.bot.send_voice(
             chat_id=self.chat_id,
             voice_path=voice,
             caption=caption,
+            parse_mode=parse_mode,
             reply_to_message_id=self.message_id,
         )
         if sent and delete_after is not None:
             await sent.delete(delete_after=delete_after)
         return sent
 
-    async def reply_gif(self, gif: str, caption: str, delete_after: Optional[float] = None):
+    async def reply_gif(self, gif: str, caption: str, parse_mode: str = "MARKDOWN", delete_after: Optional[float] = None):
         sent = await self.bot.send_gif(
             chat_id=self.chat_id,
             gif_path=gif,
             caption=caption,
-            reply_to_message_id=self.message_id,
-        )
-        if sent and delete_after is not None:
-            await sent.delete(delete_after=delete_after)
-        return sent
-
-    async def reply_contact(
-        self,
-        first_name: str,
-        last_name: str,
-        phone_number: str,
-        delete_after: Optional[float] = None,
-    ):
-        sent = await self.bot.send_contact(
-            chat_id=self.chat_id,
-            first_name=first_name,
-            last_name=last_name,
-            phone_number=phone_number,
-            reply_to_message_id=self.message_id,
-        )
-        if sent and delete_after is not None:
-            await sent.delete(delete_after=delete_after)
-        return sent
-
-    async def reply_location(
-        self,
-        latitude: str,
-        longitude: str,
-        delete_after: Optional[float] = None,
-    ):
-        sent = await self.bot.send_location(
-            chat_id=self.chat_id,
-            latitude=latitude,
-            longitude=longitude,
-            reply_to_message_id=self.message_id,
-        )
-        if sent and delete_after is not None:
-            await sent.delete(delete_after=delete_after)
-        return sent
-
-    async def reply_poll(
-        self,
-        question: str,
-        options: List[str],
-        delete_after: Optional[float] = None,
-    ):
-        sent = await self.bot.send_poll(
-            chat_id=self.chat_id,
-            question=question,
-            options=options,
+            parse_mode=parse_mode,
             reply_to_message_id=self.message_id,
         )
         if sent and delete_after is not None:

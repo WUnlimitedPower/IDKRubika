@@ -8,9 +8,9 @@ async def start_handler(update: Update, context: Context):
     if update.new_message:
         await update.new_message.reply_photo(
             "start.jpeg",
-            "سلام! به بات خوش آمدید."
+            "<b>سلام! به بات خوش آمدید.</b>",
+            "HTML"
         )
-
 
 async def delete_handler(update: Update, context: Context):
     if update.new_message:

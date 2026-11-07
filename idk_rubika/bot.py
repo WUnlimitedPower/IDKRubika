@@ -14,6 +14,7 @@ from .enums import (
 )
 
 from .database import Database
+from .metadata import Track_parsed
 
 
 class RubikaBot:
@@ -22,6 +23,7 @@ class RubikaBot:
         self.base_url = base_url.rstrip("/") + "/"
         self.timeout = timeout
         self.message_database: Database = Database("messages.db")
+        self.tparse: Track_parsed = Track_parsed()
 
     def _post(self, method: str, data: Optional[dict] = None, timeout: int = -1) -> dict:
         if timeout < 0:
@@ -48,6 +50,10 @@ class RubikaBot:
             return Message(msg,chat_id,self)
         return None
 
+    def _idk_make_metadata(self, text: str, parse_mode: str = "MARKDOWN"):
+        parsed = self.tparse.parse(text, parse_mode)
+        return parsed.get("text", text), parsed.get("metadata")
+
     def get_message(self,chat_id: str, message_id: str) -> Optional[Message]:
         data: dict = json.loads(self.message_database.get(
             "message",{"chat_id": chat_id,"message_id": message_id}
@@ -65,10 +71,16 @@ class RubikaBot:
         next_offset = data.get("next_offset_id", "")
         return updates, next_offset
     
-    async def send_message(self, chat_id: str, text: str, **kwargs) -> Optional[Message]:
+    async def send_message(
+        self, chat_id: str, text: str, parse_mode: str = "MARKDOWN", **kwargs
+    ) -> Optional[Message]:
         data = {"chat_id": chat_id, "text": text, **kwargs}
+        parsed_text, metadata = self._idk_make_metadata(text, parse_mode=parse_mode)
+        data["text"] = parsed_text
+        if metadata:
+            data["metadata"] = metadata
         result = await asyncio.to_thread(self._post, "sendMessage", data)
-        return self._extract_message(chat_id,result)
+        return self._extract_message(chat_id, result)
     
     
     async def send_poll(self, chat_id: str, question: str, options: List[str], **kwargs) -> Optional[Message]:
@@ -108,11 +120,14 @@ class RubikaBot:
         return await asyncio.to_thread(self._post, "forwardMessage", data)
 
     async def edit_message_text(
-        self, chat_id: str, message_id: str, text: str, **kwargs
+        self, chat_id: str, message_id: str, text: str, parse_mode: str = "MARKDOWN", **kwargs
     ):
         data = {"chat_id": chat_id, "message_id": message_id, "text": text, **kwargs}
+        parsed_text, metadata = self._idk_make_metadata(text, parse_mode=parse_mode)
+        data["text"] = parsed_text
+        if metadata:
+            data["metadata"] = metadata
         return await asyncio.to_thread(self._post, "editMessageText", data)
-
 
     async def edit_message_keypad(self, chat_id: str, message_id: str, inline_keypad: Keypad, **kwargs):
         data = {
@@ -191,31 +206,36 @@ class RubikaBot:
             logging.error(f"Upload failed: {e}")
             return None
 
-    async def _send_file_common(self, chat_id: str, file_path: str, file_type: FileTypeEnum, caption: str = "", **kwargs) -> Optional[Message]:
+    async def _send_file_common(
+        self, chat_id: str, file_path: str, file_type: FileTypeEnum,
+        caption: str = "", parse_mode: str = "MARKDOWN", **kwargs
+    ) -> Optional[Message]:
         file_id = await self._upload_file(file_path, file_type)
         if not file_id:
             return None
         data = {"chat_id": chat_id, "file_id": file_id, **kwargs}
         if caption:
-            data["text"] = caption
+            parsed_caption, metadata = self._idk_make_metadata(caption, parse_mode=parse_mode)
+            data["text"] = parsed_caption
+            if metadata:
+                data["metadata"] = metadata
         result = await asyncio.to_thread(self._post, "sendFile", data)
-        return self._extract_message(chat_id,result)
+        return self._extract_message(chat_id, result)
+    
+    async def send_photo(self, chat_id: str, photo_path: str, caption: str = "", parse_mode: str = "MARKDOWN", **kwargs) -> Optional[Message]:
+        return await self._send_file_common(chat_id, photo_path, FileTypeEnum.Image, caption, parse_mode=parse_mode, **kwargs)
 
-    async def send_photo(self, chat_id: str, photo_path: str, caption: str = "", **kwargs) -> Optional[Message]:
-        return await self._send_file_common(chat_id, photo_path, FileTypeEnum.Image, caption, **kwargs)
+    async def send_video(self, chat_id: str, video_path: str, caption: str = "", parse_mode: str = "MARKDOWN", **kwargs) -> Optional[Message]:
+        return await self._send_file_common(chat_id, video_path, FileTypeEnum.Video, caption, parse_mode=parse_mode, **kwargs)
 
-    async def send_video(self, chat_id: str, video_path: str, caption: str = "", **kwargs) -> Optional[Message]:
-        return await self._send_file_common(chat_id, video_path, FileTypeEnum.Video, caption, **kwargs)
+    async def send_voice(self, chat_id: str, voice_path: str, caption: str = "", parse_mode: str = "MARKDOWN", **kwargs) -> Optional[Message]:
+        return await self._send_file_common(chat_id, voice_path, FileTypeEnum.Voice, caption, parse_mode=parse_mode, **kwargs)
 
-    async def send_voice(self, chat_id: str, voice_path: str, caption: str = "", **kwargs) -> Optional[Message]:
-        return await self._send_file_common(chat_id, voice_path, FileTypeEnum.Voice, caption, **kwargs)
+    async def send_music(self, chat_id: str, music_path: str, caption: str = "", parse_mode: str = "MARKDOWN", **kwargs) -> Optional[Message]:
+        return await self._send_file_common(chat_id, music_path, FileTypeEnum.Music, caption, parse_mode=parse_mode, **kwargs)
 
-    async def send_music(self, chat_id: str, music_path: str, caption: str = "", **kwargs) -> Optional[Message]:
-        return await self._send_file_common(chat_id, music_path, FileTypeEnum.Music, caption, **kwargs)
+    async def send_gif(self, chat_id: str, gif_path: str, caption: str = "", parse_mode: str = "MARKDOWN", **kwargs) -> Optional[Message]:
+        return await self._send_file_common(chat_id, gif_path, FileTypeEnum.Gif, caption, parse_mode=parse_mode, **kwargs)
 
-    async def send_gif(self, chat_id: str, gif_path: str, caption: str = "", **kwargs) -> Optional[Message]:
-        return await self._send_file_common(chat_id, gif_path, FileTypeEnum.Gif, caption, **kwargs)
-
-    async def send_document(self, chat_id: str, file_path: str, caption: str = "", **kwargs) -> Optional[Message]:
-        return await self._send_file_common(chat_id, file_path, FileTypeEnum.File, caption, **kwargs)
-
+    async def send_document(self, chat_id: str, file_path: str, caption: str = "", parse_mode: str = "MARKDOWN", **kwargs) -> Optional[Message]:
+        return await self._send_file_common(chat_id, file_path, FileTypeEnum.File, caption, parse_mode=parse_mode, **kwargs)
