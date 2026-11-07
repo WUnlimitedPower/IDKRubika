@@ -1,3 +1,6 @@
+import asyncio
+import logging
+
 from typing import List, Optional, TYPE_CHECKING
 
 from .enums import (
@@ -156,7 +159,7 @@ class Bot:
 
 
 class Message:
-    def __init__(self, data: dict,chat_id: str, bot: "RubikaBot"):
+    def __init__(self, data: dict, chat_id: str, bot: "RubikaBot"):
         self.bot = bot
         self.data: dict = data
         if isinstance(data, Message):
@@ -183,91 +186,161 @@ class Message:
         )
         self.poll: Optional[Poll] = _nested(Poll, data.get("poll"))
 
-    def delete(self):
-        return self.bot.delete_message(
-            chat_id=self.chat_id,message_id=self.message_id
-        )
+    # ---- delete ----
 
-    def reply_text(self,text: str):
-        return self.bot.send_message(
-            chat_id=self.chat_id,text=text,
-            reply_to_message_id=self.message_id
-        )
+    async def delete(self, delete_after: Optional[float] = None) -> "DeleteResult":
+        """
+        پیام را حذف می‌کند.
+        - delete_after=None: فوراً حذف می‌شود.
+        - delete_after=N (ثانیه): حذف به تأخیر می‌افتد (در پس‌زمینه).
+        """
+        if delete_after is None:
+            return await self.bot.delete_message(
+                chat_id=self.chat_id, message_id=self.message_id
+            )
 
-    def reply_photo(self,photo: str, caption: str):
-        return self.bot.send_photo(
+        if delete_after < 0:
+            raise ValueError("delete_after cannot be negative")
+
+        asyncio.create_task(self._delete_later(delete_after))
+        return DeleteResult({"status": "SCHEDULED"})
+
+    async def _delete_later(self, delay: float):
+        await asyncio.sleep(delay)
+        try:
+            await self.bot.delete_message(
+                chat_id=self.chat_id, message_id=self.message_id
+            )
+        except Exception as error:
+            logging.error("Delayed delete failed: %s", error, exc_info=True)
+
+    # ---- reply_* ----
+
+    async def reply_text(self, text: str, delete_after: Optional[float] = None):
+        sent = await self.bot.send_message(
+            chat_id=self.chat_id,
+            text=text,
+            reply_to_message_id=self.message_id,
+        )
+        if sent and delete_after is not None:
+            await sent.delete(delete_after=delete_after)
+        return sent
+
+    async def reply_photo(self, photo: str, caption: str, delete_after: Optional[float] = None):
+        sent = await self.bot.send_photo(
             chat_id=self.chat_id,
             photo_path=photo,
             caption=caption,
-            reply_to_message_id=self.message_id
+            reply_to_message_id=self.message_id,
         )
+        if sent and delete_after is not None:
+            await sent.delete(delete_after=delete_after)
+        return sent
 
-    def reply_video(self,video: str, caption: str):
-            return self.bot.send_video(
-                chat_id=self.chat_id,
-                video_path=video,
-                caption=caption,
-                reply_to_message_id=self.message_id
-            )
+    async def reply_video(self, video: str, caption: str, delete_after: Optional[float] = None):
+        sent = await self.bot.send_video(
+            chat_id=self.chat_id,
+            video_path=video,
+            caption=caption,
+            reply_to_message_id=self.message_id,
+        )
+        if sent and delete_after is not None:
+            await sent.delete(delete_after=delete_after)
+        return sent
 
-    def reply_document(self,document: str, caption: str):
-            return self.bot.send_document(
-                chat_id=self.chat_id,
-                file_path=document,
-                caption=caption,
-            reply_to_message_id=self.message_id
-            )
+    async def reply_document(self, document: str, caption: str, delete_after: Optional[float] = None):
+        sent = await self.bot.send_document(
+            chat_id=self.chat_id,
+            file_path=document,
+            caption=caption,
+            reply_to_message_id=self.message_id,
+        )
+        if sent and delete_after is not None:
+            await sent.delete(delete_after=delete_after)
+        return sent
 
-    def reply_music(self,music: str, caption: str):
-            return self.bot.send_music(
-                chat_id=self.chat_id,
-                music_path=music,
-                caption=caption,
-            reply_to_message_id=self.message_id
-            )
-    
-    def reply_voice(self,voice: str, caption: str):
-            return self.bot.send_voice(
-                chat_id=self.chat_id,
-                voice_path=voice,
-                caption=caption,
-            reply_to_message_id=self.message_id
-            )
+    async def reply_music(self, music: str, caption: str, delete_after: Optional[float] = None):
+        sent = await self.bot.send_music(
+            chat_id=self.chat_id,
+            music_path=music,
+            caption=caption,
+            reply_to_message_id=self.message_id,
+        )
+        if sent and delete_after is not None:
+            await sent.delete(delete_after=delete_after)
+        return sent
 
-    def reply_gif(self,gif: str, caption: str):
-            return self.bot.send_gif(
-                chat_id=self.chat_id,
-                gif_path=gif,
-                caption=caption,
-            reply_to_message_id=self.message_id
-            )
+    async def reply_voice(self, voice: str, caption: str, delete_after: Optional[float] = None):
+        sent = await self.bot.send_voice(
+            chat_id=self.chat_id,
+            voice_path=voice,
+            caption=caption,
+            reply_to_message_id=self.message_id,
+        )
+        if sent and delete_after is not None:
+            await sent.delete(delete_after=delete_after)
+        return sent
 
-    def reply_contact(self,first_name: str,
-                           last_name: str,
-                            phone_number: str
+    async def reply_gif(self, gif: str, caption: str, delete_after: Optional[float] = None):
+        sent = await self.bot.send_gif(
+            chat_id=self.chat_id,
+            gif_path=gif,
+            caption=caption,
+            reply_to_message_id=self.message_id,
+        )
+        if sent and delete_after is not None:
+            await sent.delete(delete_after=delete_after)
+        return sent
+
+    async def reply_contact(
+        self,
+        first_name: str,
+        last_name: str,
+        phone_number: str,
+        delete_after: Optional[float] = None,
     ):
-        return self.bot.send_contact(
+        sent = await self.bot.send_contact(
             chat_id=self.chat_id,
             first_name=first_name,
-            last_name= last_name,
+            last_name=last_name,
             phone_number=phone_number,
-            reply_to_message_id=self.message_id
+            reply_to_message_id=self.message_id,
         )
-    
-    def reply_location(self,latitude: str,longitude: str,):
-        return self.bot.send_location(
-            chat_id=self.chat_id,
-            latitude=latitude,longitude=longitude,
-            reply_to_message_id=self.message_id
-        )
-        
-    def reply_poll(self,question: str,options: List[str]):
-        return self.bot.send_poll(
-            chat_id=self.chat_id,
-            question=question,options=options,
-            reply_to_message_id=self.message_id
-        )
+        if sent and delete_after is not None:
+            await sent.delete(delete_after=delete_after)
+        return sent
 
+    async def reply_location(
+        self,
+        latitude: str,
+        longitude: str,
+        delete_after: Optional[float] = None,
+    ):
+        sent = await self.bot.send_location(
+            chat_id=self.chat_id,
+            latitude=latitude,
+            longitude=longitude,
+            reply_to_message_id=self.message_id,
+        )
+        if sent and delete_after is not None:
+            await sent.delete(delete_after=delete_after)
+        return sent
+
+    async def reply_poll(
+        self,
+        question: str,
+        options: List[str],
+        delete_after: Optional[float] = None,
+    ):
+        sent = await self.bot.send_poll(
+            chat_id=self.chat_id,
+            question=question,
+            options=options,
+            reply_to_message_id=self.message_id,
+        )
+        if sent and delete_after is not None:
+            await sent.delete(delete_after=delete_after)
+        return sent
 
 class Event:
     def __init__(self, data: dict):
@@ -550,6 +623,8 @@ class MessageKeypadUpdate:
  # ===========================
 
 class DeleteResult:
-    def __init__(self,data: dict) -> None:
-        self.deleted: bool = True if data.get('status') != "INVALID_ACCESS" else False
-
+    def __init__(self, data: dict) -> None:
+        status = data.get("status", "")
+        self.status: str = status
+        self.deleted: bool = status not in ("INVALID_ACCESS", "SCHEDULED")
+        self.scheduled: bool = status == "SCHEDULED"
