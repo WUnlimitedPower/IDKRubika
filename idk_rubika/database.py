@@ -24,7 +24,17 @@ class Database:
     # مثال: db.create_table("users", {"id": "INTEGER PRIMARY KEY", "name": "TEXT"})
     # ---------------------------------------------------------------
     def create_table(self, table: str, columns: dict[str, str]) -> None:
-        cols = ", ".join(f"{name} {ctype}" for name, ctype in columns.items())
+        # ستون‌های عادی
+        normal = []
+        constraints = []
+        for name, ctype in columns.items():
+            if name.upper().startswith(("PRIMARY KEY", "UNIQUE", "FOREIGN KEY", "CHECK")):
+                constraints.append(name)
+            else:
+                normal.append(f"{name} {ctype}".strip())
+
+        parts = normal + constraints
+        cols = ", ".join(parts)
         self.cursor.execute(f"CREATE TABLE IF NOT EXISTS {table} ({cols})")
         self.connection.commit()
 
