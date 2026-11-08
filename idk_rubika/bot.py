@@ -7,7 +7,7 @@ import logging
 
 from .models import (
     Bot, Chat, BotCommand, Message, Update,
-    File, Keypad,DeleteResult
+    File, Keypad,DeleteResult,detect_chat_type
 )
 from .enums import (
     FileTypeEnum, UpdateEndpointTypeEnum, ChatKeypadTypeEnum,
@@ -15,7 +15,7 @@ from .enums import (
 
 from .database import Database
 from .metadata import Track_parsed
-
+from .chat_data_saver import ChatDataSaver
 
 class RubikaBot:
     def __init__(self, token: str ,temp_messages_database: bool = False,timeout: int = 30, base_url: str = "https://botapi.rubika.ir/v3/"):
@@ -30,6 +30,7 @@ class RubikaBot:
 
         self.message_database: Database = Database(f"{self.database_name}.db")
         self.tparse: Track_parsed = Track_parsed()
+        self.chat_data_saver: ChatDataSaver = ChatDataSaver()
 
     def _post(self, method: str, data: Optional[dict] = None, timeout: int = -1) -> dict:
         if timeout < 0:
@@ -111,8 +112,19 @@ class RubikaBot:
         return self._extract_message(chat_id,result)
 
     async def get_chat(self, chat_id: str) -> Chat:
-        result = await asyncio.to_thread(self._post, "getChat", {"chat_id": chat_id})
-        return Chat(result.get("data", {}).get("chat", {}))
+        chat_type = detect_chat_type(chat_id)
+
+        chat_data = None
+        if self.chat_data_saver.exist(chat_id, chat_type):
+            chat_data = self.chat_data_saver.get(chat_id, chat_type)
+
+        if not chat_data:
+            result = await asyncio.to_thread(self._post, "getChat", {"chat_id": chat_id})
+            chat_data = result.get("data", {}).get("chat", {})
+            if chat_data:
+                self.chat_data_saver.set(chat_data)
+
+        return Chat(chat_data or {})
     
     async def forward_message(
         self, from_chat_id: str, message_id: str, to_chat_id: str, **kwargs
