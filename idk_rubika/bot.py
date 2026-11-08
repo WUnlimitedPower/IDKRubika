@@ -18,11 +18,17 @@ from .metadata import Track_parsed
 
 
 class RubikaBot:
-    def __init__(self, token: str,timeout: int = 30, base_url: str = "https://botapi.rubika.ir/v3/"):
+    def __init__(self, token: str ,temp_messages_database: bool = False,timeout: int = 30, base_url: str = "https://botapi.rubika.ir/v3/"):
         self.token = token
         self.base_url = base_url.rstrip("/") + "/"
         self.timeout = timeout
-        self.message_database: Database = Database("messages.db")
+
+        if temp_messages_database:
+            self.database_name: str = "temp_messages"
+        else:
+            self.database_name: str = "messages"
+
+        self.message_database: Database = Database(f"{self.database_name}.db")
         self.tparse: Track_parsed = Track_parsed()
 
     def _post(self, method: str, data: Optional[dict] = None, timeout: int = -1) -> dict:

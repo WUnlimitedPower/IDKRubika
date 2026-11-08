@@ -30,7 +30,7 @@ def main():
             "Rubika token not found. Set the RUBIKA_TOKEN environment variable first."
         )
 
-    app = Application(token)
+    app = Application(token,True)
 
     # Message handlers
     app.add_handler(CommandHandler("start", start_handler))

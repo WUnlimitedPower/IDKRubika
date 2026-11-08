@@ -8,14 +8,14 @@ from .context import Context
 from .handlers import Handler
 from .models import Update
 from .storage import OffsetStore
+from .file_remove import remove_file
 
 
 class Application(RubikaBot):
 
-    def __init__(self, token: str,timeout: int = 30, base_url: str = "https://botapi.rubika.ir/v3/"):
-        super().__init__(token, timeout, base_url)
-        self.token = token
-        self.base_url = base_url
+    def __init__(self, token: str, temp_messages_database: bool = False ,timeout: int = 30, base_url: str = "https://botapi.rubika.ir/v3/"):
+        self.temp_messages_database: bool = temp_messages_database
+        super().__init__(token, temp_messages_database, timeout, base_url)
         self.handlers: List[Handler] = []
         self._offset_id = ""
         self._running = False
@@ -122,7 +122,10 @@ class Application(RubikaBot):
         self._save_offset()
 
     def run_polling(self, poll_interval: float = 1.0, drop_pending: bool = True):
-        asyncio.run(self._run_polling(poll_interval, drop_pending))
+        try:
+            asyncio.run(self._run_polling(poll_interval, drop_pending))
+        except KeyboardInterrupt:
+            self.stop()
 
     async def _run_polling(self, poll_interval: float = 1.0, drop_pending: bool = True):
         if poll_interval < 0:
@@ -157,9 +160,12 @@ class Application(RubikaBot):
             except Exception as error:
                 logging.error("Polling error: %s", error, exc_info=True)
                 await asyncio.sleep(5)
-
-        def stop(self):
-            self._running = False
+            
 
     def stop(self):
+
+        if self.temp_messages_database:
+            remove_file(f"{self.database_name}.db")
+            
         self._running = False
+        logging.info("Bot stopped.")
