@@ -158,6 +158,17 @@ class Bot:
         self.share_url: str = data.get("share_url", "")
 
 
+def detect_chat_type(chat_id: str) -> ChatTypeEnum:
+
+    if chat_id.startswith('g'):
+        return ChatTypeEnum.Group
+    elif chat_id.startswith('c'):
+        return ChatTypeEnum.Channel
+    elif chat_id.startswith('b'):
+        return ChatTypeEnum.User
+    else:
+        return ChatTypeEnum.Unknown
+
 class Message:
     def __init__(self, data: dict, chat_id: str, bot: "RubikaBot"):
         self.bot = bot
@@ -169,6 +180,7 @@ class Message:
         self.text: str = data.get("text", "")
         self.time: int = data.get("time", 0)
         self.chat_id: str = chat_id
+        self.chat_type: str = detect_chat_type(chat_id).value
         self.is_edited: bool = data.get("is_edited", False)
         self.sender_type: str = data.get("sender_type", "")
         self.sender_id: str = data.get("sender_id", "")

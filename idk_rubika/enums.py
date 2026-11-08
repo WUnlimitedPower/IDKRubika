@@ -112,6 +112,7 @@ class ChatTypeEnum(str, Enum):
     Bot = "Bot"
     Group = "Group"
     Channel = "Channel"
+    Unknown = "Unknown"
 
 
 class FileTypeEnum(str, Enum):
