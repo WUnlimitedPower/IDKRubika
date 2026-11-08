@@ -19,7 +19,8 @@ from .enums import (
     EventTypeEnum,
     MetadataTypeEnum,
     UpdateTypeEnum,
-    FileTypeEnum
+    FileTypeEnum,
+    ChatTypeEnum,
 )
 from .filters import AndFilter, BaseFilter, InvertFilter, OrFilter, filters
 from .handlers import (
@@ -86,6 +87,7 @@ __all__ = [
     "ChatKeypadTypeEnum",
     "MetadataTypeEnum",
     "FileTypeEnum",
+    "ChatTypeEnum",
     "File",
     "Location",
     "AuxData",
