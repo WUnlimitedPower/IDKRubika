@@ -56,6 +56,7 @@ from .models import (
     Sticker,
     Update,
 )
+from .conversation import ConversationHandler
 
 __all__ = [
     "Application",
@@ -112,4 +113,5 @@ __all__ = [
     "Keypad",
     "MetadataPart",
     "Metadata",
+    "ConversationHandler",
 ]
