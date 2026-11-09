@@ -1,3 +1,4 @@
+import logging
 from typing import List, Dict, Any, Tuple
 from .handlers import Handler
 from .models import Update
@@ -16,9 +17,10 @@ class ConversationHandler(Handler):
         allow_reentry: bool = False,
     ):
         async def _placeholder(update, context):
+            logging.info("AHsdAHdioahsdoiahsdoiahsdoh")
             return None
 
-        super().__init__(callback=_placeholder)
+        super().__init__(callback=self.callback)
         self.entry_points = entry_points
         self.states = states
         self.fallbacks = fallbacks
