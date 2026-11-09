@@ -64,7 +64,7 @@ class RubikaBot:
     def get_message(self,chat_id: str, message_id: str) -> Optional[Message]:
         data: dict = json.loads(self.message_database.get(
             "message",{"chat_id": chat_id,"id": message_id}
-        ))['data']
+        )['data'])
         
         return Message(data,data['chat_id'],self)
 
