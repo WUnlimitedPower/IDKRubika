@@ -29,6 +29,7 @@ from .handlers import (
     Handler,
     MessageHandler,
     UpdateHandler,
+    CommandTextHandler,
 )
 from .models import (
     AuxData,
@@ -114,4 +115,5 @@ __all__ = [
     "MetadataPart",
     "Metadata",
     "ConversationHandler",
+    "CommandTextHandler"
 ]
