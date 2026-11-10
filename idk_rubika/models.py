@@ -172,6 +172,7 @@ def detect_chat_type(chat_id: str) -> ChatTypeEnum:
 class Message:
     def __init__(self, data: dict, chat_id: str, bot: "RubikaBot"):
         self.bot = bot
+        data['chat_id'] = chat_id
         self.data: dict = data
         if isinstance(data, Message):
             self.__dict__.update(data.__dict__)
