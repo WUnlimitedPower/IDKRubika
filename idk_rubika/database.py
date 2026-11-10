@@ -3,13 +3,24 @@ from typing import Any, Optional
 
 
 class Database:
-    """کلاس ساده برای کار با دیتابیس SQLite3"""
+    """کلاس ساده برای کار با دیتابیس SQLite3 (بهینه‌شده برای همزمانی چند thread)"""
 
     def __init__(self, db_path: str = "database.db"):
         self.db_path = db_path
-        self.connection = sqlite3.connect(db_path, check_same_thread=False)
+        self.connection = sqlite3.connect(
+            db_path,
+            check_same_thread=False,
+            timeout=5.0,
+            isolation_level=None,
+        )
         self.connection.row_factory = sqlite3.Row
         self.cursor = self.connection.cursor()
+
+        # --- تنظیمات کلیدی برای جلوگیری از database is locked ---
+        self.connection.execute("PRAGMA journal_mode=WAL")
+        self.connection.execute("PRAGMA synchronous=NORMAL")
+        self.connection.execute("PRAGMA busy_timeout=5000")
+        self.connection.execute("PRAGMA foreign_keys=ON")
 
     # ---------------------------------------------------------------
     # اجرای دستور خام
@@ -21,10 +32,8 @@ class Database:
 
     # ---------------------------------------------------------------
     # ساخت جدول
-    # مثال: db.create_table("users", {"id": "INTEGER PRIMARY KEY", "name": "TEXT"})
     # ---------------------------------------------------------------
     def create_table(self, table: str, columns: dict[str, str]) -> None:
-        # ستون‌های عادی
         normal = []
         constraints = []
         for name, ctype in columns.items():
@@ -40,8 +49,6 @@ class Database:
 
     # ---------------------------------------------------------------
     # set: درج یا به‌روزرسانی یک رکورد
-    # اولین کلید دیکشنری به عنوان شناسه (کلید یکتا) استفاده می‌شود
-    # db.set("users", {"id": 1, "name": "Ali"})
     # ---------------------------------------------------------------
     def set(self, table: str, data: dict[str, Any]) -> None:
         key = next(iter(data))
@@ -64,9 +71,6 @@ class Database:
 
     # ---------------------------------------------------------------
     # get: گرفتن رکورد(ها) بر اساس شرط
-    # db.get("users", {"id": 1})            -> یک رکورد یا None
-    # db.get("users")                       -> همه رکوردها
-    # db.get("users", {"name": "Ali"}, many=True) -> همه رکوردهای مطابق
     # ---------------------------------------------------------------
     def get(
         self,
@@ -92,8 +96,6 @@ class Database:
 
     # ---------------------------------------------------------------
     # remove: حذف رکورد(ها) بر اساس شرط
-    # db.remove("users", {"id": 1})
-    # db.remove("users")  -> حذف همه رکوردها
     # ---------------------------------------------------------------
     def remove(self, table: str, conditions: Optional[dict[str, Any]] = None) -> None:
         query = f"DELETE FROM {table}"
@@ -109,7 +111,6 @@ class Database:
 
     # ---------------------------------------------------------------
     # exist: بررسی وجود رکورد
-    # db.exist("users", {"id": 1})  -> True / False
     # ---------------------------------------------------------------
     def exist(self, table: str, conditions: dict[str, Any]) -> bool:
         where = " AND ".join(f"{k} = ?" for k in conditions)
